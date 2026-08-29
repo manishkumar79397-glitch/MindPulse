@@ -1,0 +1,46 @@
+name: mansaathi
+description: "AI-Based Cognitive Gaming and Memory Assistance Platform for Elderly Dementia Patients in the North Eastern Region (NER)"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Offline local database & storage
+  sqflite: ^2.3.2
+  path_provider: ^2.1.2
+  shared_preferences: ^2.2.2
+  
+  # Networking & Cloud
+  http: ^1.2.0
+  supabase_flutter: ^2.3.4
+  
+  # Voice & Audio
+  flutter_tts: ^3.8.5
+  speech_to_text: ^6.6.1
+  audioplayers: ^6.0.0
+  
+  # Notifications & Alarms
+  flutter_local_notifications: ^17.1.2
+  
+  # Location & Emergency
+  geolocator: ^11.0.0
+  url_launcher: ^6.2.5
+  
+  # Icons & UI
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/audio/
+
