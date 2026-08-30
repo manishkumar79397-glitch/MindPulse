@@ -123,3 +123,77 @@ class CaregiverPatientSummary(BaseModel):
     active_reminders: List[Dict[str, Any]]
     recent_sos_alerts: List[Dict[str, Any]]
 
+# Safe Locations & Geofencing Models
+class SafeLocation(BaseModel):
+    id: str
+    patient_id: str
+    name: str  # e.g., "Ghar (Home)", "Nehru Park", "Dr. Baruah Clinic"
+    category: str = "home" # 'home', 'park', 'clinic', 'temple', 'community'
+    latitude: float
+    longitude: float
+    radius_meters: float = 300.0  # Safe perimeter radius in meters
+    icon: str = "🏠"
+    address: Optional[str] = "Guwahati, Assam"
+
+class WhereAmIRequest(BaseModel):
+    patient_id: str
+    latitude: float
+    longitude: float
+    language: str = "hi"
+
+class WhereAmIResponse(BaseModel):
+    status: str # 'INSIDE_SAFE_ZONE', 'NEAR_SAFE_ZONE', 'OUTSIDE_SAFE_ZONE'
+    location_name: str # e.g. "Ghar (Home)"
+    location_icon: str # "🏠"
+    comforting_message: str # e.g. "Aap ghar ke paas hain."
+    spoken_audio: str # Spoken audio prompt
+    distance_meters: float
+    caregiver_name: str # "Amit" or "Priyanka"
+    caregiver_phone: str # "+919876543210"
+    can_call_caregiver: bool = True
+
+class SafeWalkStartRequest(BaseModel):
+    patient_id: str
+    initial_latitude: float
+    initial_longitude: float
+    language: str = "hi"
+
+class SafeWalkStartResponse(BaseModel):
+    walk_id: str
+    status: str # 'ACTIVE'
+    safe_zone_name: str
+    safe_radius_meters: float
+    comforting_message: str
+    started_at: str
+
+class GeofenceCheckRequest(BaseModel):
+    patient_id: str
+    walk_id: Optional[str] = None
+    latitude: float
+    longitude: float
+    language: str = "hi"
+
+class GeofenceCheckResponse(BaseModel):
+    is_inside_safe_zone: bool
+    nearest_safe_location: str
+    distance_meters: float
+    safe_radius_meters: float
+    patient_message: str
+    spoken_audio: str
+    alert_triggered: bool
+    alert_details: Optional[Dict[str, Any]] = None
+
+class SafeWalkStopRequest(BaseModel):
+    patient_id: str
+    walk_id: str
+    final_latitude: float
+    final_longitude: float
+    duration_minutes: int = 15
+
+class SafeWalkStopResponse(BaseModel):
+    walk_id: str
+    status: str # 'COMPLETED'
+    duration_minutes: int
+    summary_message: str
+
+

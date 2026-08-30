@@ -127,3 +127,99 @@ export async function processVoiceQuery(transcript, language = 'hi') {
   }
 }
 
+export async function fetchWhereAmI(latitude = 26.1445, longitude = 91.7362, language = 'hi') {
+  try {
+    const res = await fetch(`${API_BASE_URL}/location/where-am-i`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patient_id: "a1b2c3d4-0000-0000-0000-000000000001", latitude, longitude, language })
+    });
+    return await res.json();
+  } catch (err) {
+    return {
+      status: "INSIDE_SAFE_ZONE",
+      location_name: "Ghar (Home)",
+      location_icon: "🏠",
+      comforting_message: language === 'hi' ? "Aap ghar ke paas hain." : "You are safe and close to home.",
+      spoken_audio: "Namaste Aai, aap surakshit hain. Aap ghar ke paas hain.",
+      distance_meters: 15.0,
+      comforting_message: language === 'hi' ? "Aap apne ghar se 45 meter ki doori par hain." : "You are 45 meters from home.",
+      spoken_audio: language === 'hi' ? "Namaste Aai, aap apne ghar se lagbhag 45 meter door hain aur surakshit kshetra mein hain." : "You are 45 meters from your home.",
+      distance_meters: 45.0,
+      distance_from_home_meters: 45.0,
+      distance_from_home_text: "45 meter",
+      caregiver_name: "Amit Sharma",
+      caregiver_phone: "+919876543210",
+      can_call_caregiver: true
+    };
+  }
+}
+
+export async function startSafeWalk(latitude = 26.1445, longitude = 91.7362, language = 'hi') {
+  try {
+    const res = await fetch(`${API_BASE_URL}/location/safe-walk/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patient_id: "a1b2c3d4-0000-0000-0000-000000000001", initial_latitude: latitude, initial_longitude: longitude, language })
+    });
+    return await res.json();
+  } catch (err) {
+    return {
+      walk_id: "walk-" + Date.now(),
+      status: "ACTIVE",
+      safe_zone_name: "Home Perimeter (Guwahati)",
+      safe_radius_meters: 400.0,
+      comforting_message: "Safe Walk shuru ho gayi hai. Hum aapki suraksha ka dhyan rakh rahe hain.",
+      started_at: new Date().toISOString()
+    };
+  }
+}
+
+export async function checkGeofence(latitude, longitude, walkId = null, language = 'hi') {
+  try {
+    const res = await fetch(`${API_BASE_URL}/location/geofence-check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patient_id: "a1b2c3d4-0000-0000-0000-000000000001", walk_id: walkId, latitude, longitude, language })
+    });
+    return await res.json();
+  } catch (err) {
+    const isInside = Math.abs(latitude - 26.1445) < 0.003 && Math.abs(longitude - 91.7362) < 0.003;
+    return {
+      is_inside_safe_zone: isInside,
+      nearest_safe_location: "Ghar (Home)",
+      distance_meters: isInside ? 120.0 : 850.0,
+      safe_radius_meters: 400.0,
+      patient_message: isInside ? "Aap safe zone mein hain. Walk ka anand lein." : "Aap safe area se thoda bahar hain.",
+      spoken_audio: isInside ? "Aap surakshit kshetra mein hain." : "Aai, aap thoda bahar aa gaye hain. Chaliye wapas ghar mudte hain.",
+      alert_triggered: !isInside,
+      alert_details: !isInside ? {
+        type: "SAFE_ZONE_BREACH",
+        patient_name: "Aai (Anjali Sharma)",
+        message: "Aai appears to have moved outside the configured safe area.",
+        latitude,
+        longitude,
+        nearest_location: "Ghar (Home)",
+        distance_meters: 850.0,
+        maps_url: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`,
+        caregiver_notified: "Amit Sharma",
+        timestamp: "Just now"
+      } : null
+    };
+  }
+}
+
+export async function fetchSafeLocations() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/patient/a1b2c3d4-0000-0000-0000-000000000001/safe-locations`);
+    return await res.json();
+  } catch (err) {
+    return [
+      { id: "loc-home", name: "Ghar (Home)", category: "home", latitude: 26.1445, longitude: 91.7362, radius_meters: 400, icon: "🏠", address: "Borpukhuri, Uzan Bazar, Guwahati" },
+      { id: "loc-park", name: "Dighalipukhuri Park", category: "park", latitude: 26.1480, longitude: 91.7390, radius_meters: 350, icon: "🌳", address: "Dighalipukhuri East, Guwahati" },
+      { id: "loc-clinic", name: "Dr. Baruah Clinic", category: "clinic", latitude: 26.1410, longitude: 91.7340, radius_meters: 200, icon: "🏥", address: "Panbazar, Guwahati" }
+    ];
+  }
+}
+
+

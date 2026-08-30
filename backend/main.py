@@ -7,6 +7,7 @@ from api.sync import router as sync_router
 from api.voice import router as voice_router
 from api.emergency import router as emergency_router
 from api.patients import router as patients_router
+from api.location import router as location_router
 
 app = FastAPI(
     title="ManSaathi AI Backend API",
@@ -30,6 +31,7 @@ app.include_router(sync_router)
 app.include_router(voice_router)
 app.include_router(emergency_router)
 app.include_router(patients_router)
+app.include_router(location_router)
 
 @app.get("/")
 async def health_check():

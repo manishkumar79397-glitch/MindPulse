@@ -6,6 +6,7 @@ import GameSessionHistory from './components/GameSessionHistory';
 import MemoryVaultManager from './components/MemoryVaultManager';
 import ReminderScheduleManager from './components/ReminderScheduleManager';
 import SOSAlertsLog from './components/SOSAlertsLog';
+import SafeZonesGeofencing from './components/SafeZonesGeofencing';
 import LivePatientSimulator from './components/LivePatientSimulator';
 import { fetchPatientSummary, triggerSOSAlert } from './services/api';
 
@@ -99,6 +100,12 @@ export default function App() {
 
           {activeTab === 'reminders' && (
             <ReminderScheduleManager />
+          )}
+
+          {activeTab === 'geofencing' && (
+            <SafeZonesGeofencing 
+              onLaunchSimulator={() => setActiveTab('simulator')}
+            />
           )}
 
           {activeTab === 'sos' && (

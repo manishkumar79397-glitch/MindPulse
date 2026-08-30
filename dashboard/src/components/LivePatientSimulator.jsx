@@ -17,7 +17,7 @@ import { analyzeGameSession, triggerSOSAlert, processVoiceQuery } from '../servi
 
 export default function LivePatientSimulator({ onSyncSession }) {
   // Client state
-  const [screen, setScreen] = useState('home'); // 'home', 'game_select', 'game_active', 'routine', 'voice', 'progress', 'sos_sent'
+  const [screen, setScreen] = useState('home'); // 'home', 'game_select', 'game_active', 'routine', 'voice', 'progress', 'where_am_i', 'safe_walk', 'sos_sent'
   const [activeGame, setActiveGame] = useState(null);
   const [language, setLanguage] = useState('hi'); // 'hi', 'en', 'as'
   const [isAirplaneMode, setIsAirplaneMode] = useState(false);
@@ -28,6 +28,13 @@ export default function LivePatientSimulator({ onSyncSession }) {
   const [voiceQueryText, setVoiceQueryText] = useState('');
   const [voiceResponse, setVoiceResponse] = useState(null);
 
+  // Safe Walk State
+  const [walkActive, setWalkActive] = useState(false);
+  const [walkMinutes, setWalkMinutes] = useState(8);
+  const [walkSteps, setWalkSteps] = useState(480);
+  const [isOutsideGeofence, setIsOutsideGeofence] = useState(false);
+  const [geofenceMessage, setGeofenceMessage] = useState('Aap safe zone mein hain. Walk ka anand lein.');
+
   // Localization strings
   const labels = {
     hi: {
@@ -35,6 +42,8 @@ export default function LivePatientSimulator({ onSyncSession }) {
       subtitle: "Aap aaj kya karna chahengi?",
       playGame: "KHEL KHELEIN (GAMES)",
       myRoutine: "MERI DAWA AUR ROUTINE",
+      whereAmI: "MAIN KAHAN HOON? 🏠",
+      safeWalk: "SAFE WALK (SAIR) 🚶‍♂️",
       voiceAssist: "MANSAATHI SE BAAT KAREIN",
       myProgress: "MERA ABHYAS (PROGRESS)",
       helpSos: "MADAT / SOS",
@@ -46,6 +55,8 @@ export default function LivePatientSimulator({ onSyncSession }) {
       subtitle: "What would you like to do today?",
       playGame: "PLAY GAMES",
       myRoutine: "MY ROUTINE & MEDICINE",
+      whereAmI: "WHERE AM I? 🏠",
+      safeWalk: "SAFE WALK MODE 🚶‍♂️",
       voiceAssist: "TALK TO MANSAATHI",
       myProgress: "MY DAILY PROGRESS",
       helpSos: "HELP / SOS",
@@ -57,6 +68,8 @@ export default function LivePatientSimulator({ onSyncSession }) {
       subtitle: "Aaji apuni ki koribo bisare?",
       playGame: "KHEL KHELU",
       myRoutine: "MUKHYO NIYAM ARU OUKHUDH",
+      whereAmI: "MOI KOT AASU? 🏠",
+      safeWalk: "SURAKSHIT KHOJ 🚶‍♂️",
       voiceAssist: "MANSAATHIR LOGOT KOTHA PATU",
       myProgress: "AAMAR PRAGATI",
       helpSos: "SOHAI / SOS",
@@ -165,6 +178,29 @@ export default function LivePatientSimulator({ onSyncSession }) {
     });
   };
 
+  const handleWhereAmI = async () => {
+    const res = await fetchWhereAmI(26.1445, 91.7362, language);
+    playVoice(res.spoken_audio || "Aap ghar ke paas hain.");
+    setScreen('where_am_i');
+  };
+
+  const handleStartSafeWalk = async () => {
+    setWalkActive(true);
+    setIsOutsideGeofence(false);
+    setWalkMinutes(10);
+    setWalkSteps(520);
+    setGeofenceMessage('Aap safe zone mein hain. Walk ka anand lein.');
+    playVoice(language === 'hi' ? "Safe Walk shuru ho gayi hai. Hum aapki suraksha ka dhyan rakh rahe hain." : "Safe Walk active. You are inside the safe area.");
+    setScreen('safe_walk');
+  };
+
+  const handleSimulateMoveOutside = async () => {
+    setIsOutsideGeofence(true);
+    const res = await checkGeofence(26.1750, 91.7750, 'walk-demo', language);
+    setGeofenceMessage(res.patient_message);
+    playVoice(res.spoken_audio);
+  };
+
   return (
     <div className="space-y-6">
       {/* Simulator Control Bar */}
@@ -244,7 +280,7 @@ export default function LivePatientSimulator({ onSyncSession }) {
       </div>
 
       {/* Simulated Device Frame */}
-      <div className="max-w-md mx-auto bg-amber-50/40 border-8 border-slate-800 rounded-[44px] shadow-2xl overflow-hidden min-h-[620px] flex flex-col justify-between">
+      <div className="max-w-md mx-auto bg-amber-50/40 border-8 border-slate-800 rounded-[44px] shadow-2xl overflow-hidden min-h-[660px] flex flex-col justify-between">
         {/* Device Top Speaker / Camera Notch */}
         <div className="bg-slate-800 text-slate-400 py-1.5 px-6 flex items-center justify-between text-[10px]">
           <span>08:30 AM</span>
@@ -255,49 +291,63 @@ export default function LivePatientSimulator({ onSyncSession }) {
         {/* Screen Container */}
         <div className="p-6 flex-1 flex flex-col justify-between">
           {screen === 'home' && (
-            <div className="space-y-4 text-center">
+            <div className="space-y-3.5 text-center">
               <div>
                 <h2 className="text-2xl font-extrabold text-slate-900">{t.greeting}</h2>
-                <p className="text-sm text-slate-600 mt-1">{t.subtitle}</p>
+                <p className="text-xs text-slate-600 mt-0.5">{t.subtitle}</p>
               </div>
 
-              {/* 5 Massive Elderly Touch Target Action Buttons (Each >= 70px) */}
-              <div className="space-y-3 pt-2">
+              {/* Action Buttons (Each >= 72px) */}
+              <div className="space-y-2.5 pt-1">
+                {/* 1. Play Games */}
                 <button
                   onClick={() => setScreen('game_select')}
-                  className="w-full min-h-[74px] p-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold text-base flex items-center justify-center gap-3 shadow-md shadow-amber-500/20 active:scale-95 transition"
+                  className="w-full min-h-[70px] p-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold text-sm flex items-center justify-center gap-3 shadow-md shadow-amber-500/20 active:scale-95 transition"
                 >
                   <span className="text-2xl">🌸</span>
                   <span>{t.playGame}</span>
                 </button>
 
+                {/* 2. Where Am I? (Spec Requirement #8) */}
+                <button
+                  onClick={handleWhereAmI}
+                  className="w-full min-h-[70px] p-3.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-sm flex items-center justify-center gap-3 shadow-md shadow-teal-600/20 active:scale-95 transition"
+                >
+                  <span className="text-2xl">🏠</span>
+                  <span>{t.whereAmI}</span>
+                </button>
+
+                {/* 3. Safe Walk Mode (Spec Requirement #9) */}
+                <button
+                  onClick={handleStartSafeWalk}
+                  className="w-full min-h-[70px] p-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm flex items-center justify-center gap-3 shadow-md shadow-emerald-600/20 active:scale-95 transition"
+                >
+                  <span className="text-2xl">🚶‍♂️</span>
+                  <span>{t.safeWalk}</span>
+                </button>
+
+                {/* 4. My Routine */}
                 <button
                   onClick={() => { setScreen('routine'); playVoice("Aapki dawa aur subah ka samay yahan hai."); }}
-                  className="w-full min-h-[74px] p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base flex items-center justify-center gap-3 shadow-md shadow-emerald-600/20 active:scale-95 transition"
+                  className="w-full min-h-[66px] p-3 rounded-2xl bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-sm flex items-center justify-center gap-3 shadow-md active:scale-95 transition"
                 >
                   <span className="text-2xl">⏰</span>
                   <span>{t.myRoutine}</span>
                 </button>
 
+                {/* 5. Voice Assistant */}
                 <button
                   onClick={() => { setScreen('voice'); playVoice("Main sun raha hoon, boliye Aai."); }}
-                  className="w-full min-h-[74px] p-4 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-base flex items-center justify-center gap-3 shadow-md shadow-sky-600/20 active:scale-95 transition"
+                  className="w-full min-h-[66px] p-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm flex items-center justify-center gap-3 shadow-md shadow-sky-600/20 active:scale-95 transition"
                 >
                   <span className="text-2xl">🎙️</span>
                   <span>{t.voiceAssist}</span>
                 </button>
 
-                <button
-                  onClick={() => { setScreen('progress'); playVoice("Aapka abhyas bahut sundar raha hai."); }}
-                  className="w-full min-h-[70px] p-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-base flex items-center justify-center gap-3 shadow-md shadow-indigo-600/20 active:scale-95 transition"
-                >
-                  <span className="text-2xl">❤️</span>
-                  <span>{t.myProgress}</span>
-                </button>
-
+                {/* 6. Emergency SOS */}
                 <button
                   onClick={handleTriggerSOS}
-                  className="w-full min-h-[70px] p-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-base flex items-center justify-center gap-3 shadow-md shadow-rose-600/20 active:scale-95 transition"
+                  className="w-full min-h-[66px] p-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm flex items-center justify-center gap-3 shadow-md shadow-rose-600/20 active:scale-95 transition"
                 >
                   <span className="text-2xl">🚨</span>
                   <span>{t.helpSos}</span>
@@ -531,6 +581,117 @@ export default function LivePatientSimulator({ onSyncSession }) {
                 <div className="text-xs font-bold text-emerald-700 bg-emerald-50 py-1.5 rounded-xl">
                   Dawa Routine: 100% Pura
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* 8. "Where Am I?" Safety Mode Screen */}
+          {screen === 'where_am_i' && (
+            <div className="space-y-4 text-center">
+              <button onClick={() => setScreen('home')} className="text-xs font-bold text-slate-600 flex items-center gap-1.5 p-2 rounded-xl bg-white border border-slate-200">
+                <ArrowLeft className="w-4 h-4" /> <span>Back</span>
+              </button>
+
+              <h3 className="text-base font-extrabold text-slate-900">Main Kahan Hoon?</h3>
+
+              {/* Simplified Reassuring Card */}
+              <div className="p-5 rounded-3xl bg-white border-2 border-teal-500 shadow-md space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-3xl">
+                  🏠
+                </div>
+
+                <div>
+                  <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">Aapki Sthiti</div>
+                  <h4 className="text-xl font-extrabold text-slate-900 mt-0.5">Aap ghar ke paas hain</h4>
+                  <p className="text-xs text-slate-500 mt-1">Borpukhuri, Uzan Bazar • Guwahati</p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-left bg-slate-50 p-3 rounded-xl">
+                  <div>
+                    <div className="text-[11px] text-slate-400 font-medium">Caregiver:</div>
+                    <div className="font-bold text-slate-800">Amit Sharma (Beta)</div>
+                  </div>
+                  <span className="text-xs font-semibold text-emerald-600">Surakshit kshetra</span>
+                </div>
+
+                {/* 1-Tap Call Caregiver */}
+                <a
+                  href="tel:+919876543210"
+                  className="w-full min-h-[58px] p-3 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md active:scale-95 transition"
+                >
+                  <PhoneCall className="w-4 h-4" />
+                  <span>Call Amit (+91 98765 43210)</span>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* 9. Safe Walk + Geofencing Mode Screen */}
+          {screen === 'safe_walk' && (
+            <div className="space-y-4 text-center">
+              <button onClick={() => setScreen('home')} className="text-xs font-bold text-slate-600 flex items-center gap-1.5 p-2 rounded-xl bg-white border border-slate-200">
+                <ArrowLeft className="w-4 h-4" /> <span>Back</span>
+              </button>
+
+              <h3 className="text-base font-extrabold text-slate-900">Safe Walk Mode 🚶‍♂️</h3>
+
+              {/* Status Card */}
+              <div className={`p-4 rounded-3xl border-2 transition ${
+                isOutsideGeofence ? 'bg-rose-50 border-rose-400' : 'bg-white border-emerald-400'
+              }`}>
+                <div className="flex items-center justify-around py-2">
+                  <div>
+                    <div className="text-2xl font-extrabold text-slate-900">{walkMinutes} m</div>
+                    <div className="text-[11px] text-slate-500 font-semibold">Samay (Time)</div>
+                  </div>
+                  <div className="h-8 w-px bg-slate-200"></div>
+                  <div>
+                    <div className="text-2xl font-extrabold text-emerald-700">{walkSteps}</div>
+                    <div className="text-[11px] text-slate-500 font-semibold">Kadam (Steps)</div>
+                  </div>
+                </div>
+
+                <div className={`mt-3 p-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 ${
+                  isOutsideGeofence ? 'bg-rose-600 text-white animate-pulse' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                }`}>
+                  <span>{isOutsideGeofence ? '⚠️ SAFE ZONE SE BAHAR' : '✓ SURAKSHIT KSHTERA MEIN'}</span>
+                </div>
+
+                <p className="text-xs text-slate-600 mt-2 italic">
+                  "{geofenceMessage}"
+                </p>
+              </div>
+
+              {/* Simulation Action Controls */}
+              <div className="space-y-2 pt-1">
+                {!isOutsideGeofence ? (
+                  <button
+                    onClick={handleSimulateMoveOutside}
+                    className="w-full py-3 px-4 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition"
+                  >
+                    🚶‍♂️ Simulate Walk Outside Safe Zone (Test Alert)
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <a
+                      href="tel:+919876543210"
+                      className="w-full min-h-[50px] p-3 rounded-2xl bg-rose-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs"
+                    >
+                      <PhoneCall className="w-4 h-4" />
+                      <span>Amit ji ko Call Karein</span>
+                    </a>
+                    <button
+                      onClick={() => {
+                        setIsOutsideGeofence(false);
+                        setGeofenceMessage('Aap wapas safe zone mein aa gaye hain.');
+                        playVoice('Shabash Aai! Aap wapas safe zone mein aa gaye hain.');
+                      }}
+                      className="w-full py-2.5 rounded-2xl bg-emerald-600 text-white font-bold text-xs"
+                    >
+                      Ghar Ki Taraf Wapas Mudein (Return to Safe Zone)
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

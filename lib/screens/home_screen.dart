@@ -7,6 +7,8 @@ import '../services/voice_service.dart';
 import 'routine_screen.dart';
 import 'voice_screen.dart';
 import 'emergency_sos_screen.dart';
+import 'where_am_i_screen.dart';
+import 'safe_walk_screen.dart';
 import '../games/family_memory_game.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -96,11 +98,43 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
 
-                    // 2. MY ROUTINE
+                    // 2. WHERE AM I? (Requirement #8)
+                    LargeElderlyButton(
+                      label: lang == 'hi' ? 'MAIN KAHAN HOON?' : (lang == 'as' ? 'MOI KOT AASU?' : 'WHERE AM I?'),
+                      emoji: '🏠',
+                      backgroundColor: const Color(0xFF0D9488),
+                      textColor: Colors.white,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WhereAmIScreen(language: lang),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // 3. SAFE WALK (Requirement #9)
+                    LargeElderlyButton(
+                      label: lang == 'hi' ? 'SAFE WALK (SAIR)' : (lang == 'as' ? 'SURAKSHIT KHOJ' : 'SAFE WALK MODE'),
+                      emoji: '🚶‍♂️',
+                      backgroundColor: ElderlyTheme.sageGreen,
+                      textColor: Colors.white,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SafeWalkScreen(language: lang),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // 4. MY ROUTINE
                     LargeElderlyButton(
                       label: AppStrings.get('btn_my_routine', language: lang),
                       emoji: '⏰',
-                      backgroundColor: ElderlyTheme.sageGreen,
+                      backgroundColor: const Color(0xFF334155),
                       textColor: Colors.white,
                       onPressed: () {
                         Navigator.push(
@@ -112,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
 
-                    // 3. VOICE ASSISTANT
+                    // 5. VOICE ASSISTANT
                     LargeElderlyButton(
                       label: AppStrings.get('btn_voice_assist', language: lang),
                       emoji: '🎙️',
@@ -128,25 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
 
-                    // 4. MY PROGRESS
-                    LargeElderlyButton(
-                      label: AppStrings.get('btn_my_progress', language: lang),
-                      emoji: '❤️',
-                      backgroundColor: const Color(0xFF6366F1),
-                      textColor: Colors.white,
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Shabash Aai! Aapka aaj ka abhyas bahut sundar raha.'),
-                            backgroundColor: ElderlyTheme.sageGreen,
-                          ),
-                        );
-                      },
-                    ),
+                    const SizedBox(height: 8.0),
 
-                    const SizedBox(height: 10.0),
-
-                    // 5. SOS / HELP
+                    // 6. SOS / HELP
                     LargeElderlyButton(
                       label: AppStrings.get('btn_help_sos', language: lang),
                       emoji: '🚨',

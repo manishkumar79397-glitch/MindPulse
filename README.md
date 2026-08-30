@@ -79,6 +79,12 @@ python -m pip install -r requirements.txt
 python -m pytest tests/                # Run all test suites
 python -m uvicorn main:app --reload --port 8000
 ```
+
+If you are starting from the project root instead of the backend folder, use:
+```bash
+python -m uvicorn --app-dir backend main:app --reload --port 8000
+```
+
 Backend API will be live at: `http://localhost:8000` (API Docs: `http://localhost:8000/docs`)
 
 ### 2. Run the Caregiver Dashboard

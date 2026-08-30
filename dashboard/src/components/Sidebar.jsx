@@ -7,6 +7,7 @@ import {
   AlertTriangle, 
   Smartphone, 
   BookHeart,
+  Compass,
   HelpCircle
 } from 'lucide-react';
 
@@ -16,6 +17,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
     { id: 'games', label: 'Cognitive Activities', icon: Gamepad2 },
     { id: 'memory_vault', label: 'Personal Memory Vault', icon: ImageIcon },
     { id: 'reminders', label: 'Routine & Medicines', icon: Clock },
+    { id: 'geofencing', label: 'Safe Zones & Geofencing', icon: Compass },
     { id: 'sos', label: 'SOS & Safety Logs', icon: AlertTriangle },
     { id: 'simulator', label: 'Elderly App Simulator', icon: Smartphone, highlight: true },
   ];

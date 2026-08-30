@@ -20,6 +20,13 @@ INTENT_PATTERNS = {
     ],
     "TELL_STORY": [
         "kahani", "story", "purane", "din", "bhajan", "gaana", "song", "smriti"
+    ],
+    "WHERE_AM_I": [
+        "kahan hoon", "kahan hu", "main kahan", "where am i", "location", "jagah",
+        "ghar kahan", "sthan", "kot aasu", "kontha"
+    ],
+    "SAFE_WALK": [
+        "safe walk", "walk", "sair", "tahalna", "ghoomna", "park jana", "khoj"
     ]
 }
 
@@ -74,6 +81,26 @@ def parse_voice_transcript(transcript: str, language: str = "hi") -> Dict[str, A
             spoken = "Let's enjoy sweet memories of your trip to Kaziranga."
         action = "LAUNCH_GAME"
         action_data = {"game_id": "purane_din"}
+
+    elif detected == "WHERE_AM_I":
+        if language == "hi":
+            spoken = "Namaste Aai, aap surakshit hain. Aap ghar ke paas hain."
+        elif language == "as":
+            spoken = "Apuni surakshit aase, ghoror usorote aase."
+        else:
+            spoken = "You are safe and close to home."
+        action = "NAVIGATE_WHERE_AM_I"
+        action_data = {"location": "Ghar (Home)", "caregiver": "Amit"}
+
+    elif detected == "SAFE_WALK":
+        if language == "hi":
+            spoken = "Safe Walk shuru ho gayi hai. Hum aapki suraksha ka dhyan rakh rahe hain."
+        elif language == "as":
+            spoken = "Safe Walk shuru hoise. Apuni nishinte khoj karibo pare."
+        else:
+            spoken = "Safe Walk mode is active. Enjoy your walk."
+        action = "NAVIGATE_SAFE_WALK"
+        action_data = {"safe_radius": "400m"}
 
     else:
         if language == "hi":
